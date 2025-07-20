@@ -7,17 +7,17 @@ export class ReportGenerator {
         this.config = loadConfig();
     }
 
-    generateReport(activityData, analysis) {
+    generateReport(activityData, analysis, manualData = null) {
         const report = {
-            markdown: this.generateMarkdownReport(activityData, analysis),
-            json: this.generateJsonReport(activityData, analysis),
-            text: this.generateTextReport(activityData, analysis)
+            markdown: this.generateMarkdownReport(activityData, analysis, manualData),
+            json: this.generateJsonReport(activityData, analysis, manualData),
+            text: this.generateTextReport(activityData, analysis, manualData)
         };
 
         return report;
     }
 
-    generateMarkdownReport(activityData, analysis) {
+    generateMarkdownReport(activityData, analysis, manualData = null) {
         const date = new Date(activityData.date).toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -39,6 +39,21 @@ export class ReportGenerator {
             const startTime = new Date(analysis.summary.firstActivity.timestamp).toLocaleTimeString();
             const endTime = new Date(analysis.summary.lastActivity.timestamp).toLocaleTimeString();
             markdown += `- **Active Period:** ${startTime} - ${endTime}\n\n`;
+        }
+
+        // Time Allocation section (if manual data provided)
+        if (manualData && manualData.timeAllocation) {
+            markdown += `## ⏰ Time Allocation\n\n`;
+            Object.entries(manualData.timeAllocation).forEach(([category, hours]) => {
+                if (hours > 0) {
+                    markdown += `- **${category}:** ${hours} hour${hours !== 1 ? 's' : ''}\n`;
+                }
+            });
+            
+            const totalHours = Object.values(manualData.timeAllocation).reduce((sum, hours) => sum + hours, 0);
+            if (totalHours > 0) {
+                markdown += `\n**Total Tracked Time:** ${totalHours} hours\n\n`;
+            }
         }
 
         // Commits section
@@ -87,6 +102,46 @@ export class ReportGenerator {
             markdown += `\n`;
         }
 
+        // Code Reviews section (if manual data provided)
+        if (manualData && manualData.codeReviews && manualData.codeReviews.participated) {
+            markdown += `## 🔍 Code Reviews\n\n`;
+            manualData.codeReviews.reviews.forEach((review, index) => {
+                const emoji = this.getReviewEmoji(review.type);
+                markdown += `### ${emoji} ${review.type}\n`;
+                markdown += `- **Description:** ${review.description}\n`;
+                markdown += `- **Outcome:** ${review.outcome}\n\n`;
+            });
+        }
+
+        // Blockers section (if manual data provided)
+        if (manualData && manualData.blockers && manualData.blockers.hadBlockers) {
+            markdown += `## 🚧 Blockers & Challenges\n\n`;
+            manualData.blockers.blockers.forEach((blocker, index) => {
+                const emoji = this.getBlockerEmoji(blocker.status);
+                markdown += `### ${emoji} ${blocker.type}\n`;
+                markdown += `- **Description:** ${blocker.description}\n`;
+                markdown += `- **Status:** ${blocker.status}\n`;
+                if (blocker.nextSteps && blocker.nextSteps.trim()) {
+                    markdown += `- **Next Steps:** ${blocker.nextSteps}\n`;
+                }
+                markdown += `\n`;
+            });
+        }
+
+        // Tomorrow's Plans section (if manual data provided)
+        if (manualData && manualData.tomorrowPlans && manualData.tomorrowPlans.length > 0) {
+            markdown += `## 📅 Tomorrow's Plans\n\n`;
+            manualData.tomorrowPlans.forEach((plan, index) => {
+                const priorityEmoji = this.getPriorityEmoji(plan.priority);
+                markdown += `- ${priorityEmoji} **${plan.task}**`;
+                if (plan.estimatedTime) {
+                    markdown += ` (${plan.estimatedTime}h)`;
+                }
+                markdown += `\n`;
+            });
+            markdown += `\n`;
+        }
+
         // Analysis section
         markdown += `## 📈 Analysis\n\n`;
 
@@ -125,16 +180,17 @@ export class ReportGenerator {
         return markdown;
     }
 
-    generateJsonReport(activityData, analysis) {
+    generateJsonReport(activityData, analysis, manualData = null) {
         return JSON.stringify({
             date: activityData.date,
             generated: new Date().toISOString(),
             activity: activityData,
-            analysis: analysis
+            analysis: analysis,
+            manualData: manualData
         }, null, 2);
     }
 
-    generateTextReport(activityData, analysis) {
+    generateTextReport(activityData, analysis, manualData = null) {
         const date = new Date(activityData.date).toLocaleDateString();
         let text = `DAILY PROGRESS REPORT - ${date}\n`;
         text += `${'='.repeat(50)}\n\n`;
@@ -188,6 +244,36 @@ export class ReportGenerator {
             night: '🌙'
         };
         return emojis[period] || '⏰';
+    }
+
+    getReviewEmoji(reviewType) {
+        const emojis = {
+            'Reviewed someone else\'s PR': '👀',
+            'My PR was reviewed': '📝',
+            'Pair programming/Live review': '👥',
+            'Other': '🔍'
+        };
+        return emojis[reviewType] || '🔍';
+    }
+
+    getBlockerEmoji(status) {
+        const emojis = {
+            'Resolved': '✅',
+            'In progress': '🔄',
+            'Need help': '🆘',
+            'Escalated': '⬆️',
+            'Waiting': '⏳'
+        };
+        return emojis[status] || '🚧';
+    }
+
+    getPriorityEmoji(priority) {
+        const emojis = {
+            'High': '🔴',
+            'Medium': '🟡',
+            'Low': '🟢'
+        };
+        return emojis[priority] || '🟡';
     }
 
     async saveReport(report, date) {

@@ -5,14 +5,18 @@ import cron from 'node-cron';
 import { GitHubService } from './github.js';
 import { ActivityAnalyzer } from './analyzer.js';
 import { ReportGenerator } from './reporter.js';
-import { isConfigured } from './config.js';
+import { isConfigured, isGitIntegrationConfigured } from './config.js';
 import { runSetup } from './setup.js';
+import { GitIntegration } from './git.js';
+import { InteractiveInput } from './interactive.js';
 
 class EasyTrackingProcess {
     constructor() {
         this.github = null;
         this.analyzer = new ActivityAnalyzer();
         this.reporter = new ReportGenerator();
+        this.git = null;
+        this.interactive = new InteractiveInput();
     }
 
     async init() {
@@ -22,6 +26,10 @@ class EasyTrackingProcess {
         }
         
         this.github = new GitHubService();
+        
+        if (isGitIntegrationConfigured()) {
+            this.git = new GitIntegration();
+        }
     }
 
     async generateDailyReport(date = new Date()) {
@@ -41,9 +49,16 @@ class EasyTrackingProcess {
             console.log(chalk.gray('🧠 Analyzing activity patterns...'));
             const analysis = this.analyzer.analyzeActivity(activityData);
             
+            // Collect manual input
+            let manualData = null;
+            const wantManualInput = await this.interactive.askForManualInput();
+            if (wantManualInput) {
+                manualData = await this.interactive.collectManualInput();
+            }
+            
             // Generate reports
             console.log(chalk.gray('📝 Generating reports...'));
-            const report = this.reporter.generateReport(activityData, analysis);
+            const report = this.reporter.generateReport(activityData, analysis, manualData);
             
             // Save reports
             console.log(chalk.gray('💾 Saving reports...'));
@@ -60,6 +75,15 @@ class EasyTrackingProcess {
             
             console.log(chalk.white('\n📁 Report saved to:'));
             console.log(chalk.gray(`  • ${savedFiles.markdown}`));
+            
+            // Git integration
+            if (this.git) {
+                console.log(chalk.gray('\n🔗 Git integration enabled...'));
+                const gitSuccess = await this.git.commitAndPushReport(savedFiles.markdown, date);
+                if (!gitSuccess) {
+                    console.log(chalk.yellow('💡 You can manually commit the report later'));
+                }
+            }
             
             if (analysis.recommendations.length > 0) {
                 console.log(chalk.white('\n💡 Recommendations:'));

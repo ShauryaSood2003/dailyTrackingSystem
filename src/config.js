@@ -19,7 +19,14 @@ export function loadConfig() {
             githubToken: null,
             githubUsername: null,
             reportDir: path.join(os.homedir(), 'daily-reports'),
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            gitIntegration: {
+                enabled: false,
+                repoPath: null,
+                userFolder: null,
+                autoCommit: true,
+                autoPush: true
+            }
         };
     }
     
@@ -34,4 +41,12 @@ export function saveConfig(config) {
 export function isConfigured() {
     const config = loadConfig();
     return config.githubToken && config.githubUsername;
+}
+
+export function isGitIntegrationConfigured() {
+    const config = loadConfig();
+    return config.gitIntegration && 
+           config.gitIntegration.enabled && 
+           config.gitIntegration.repoPath && 
+           config.gitIntegration.userFolder;
 }

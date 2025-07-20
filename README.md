@@ -11,6 +11,7 @@ Automate your daily progress tracking by analyzing your GitHub activity and gene
 - **Productivity Scoring**: Quantifies your daily output
 - **Automated Scheduling**: Can run automatically at end of day
 - **Local Storage**: Saves reports to your computer for easy access
+- **Git Integration**: Automatically commits and pushes reports to team repositories
 
 ## 🔧 Setup
 
@@ -28,6 +29,7 @@ Automate your daily progress tracking by analyzing your GitHub activity and gene
    - GitHub Personal Access Token ([create one here](https://github.com/settings/tokens))
    - Your GitHub username
    - Directory path for saving reports
+   - **Optional**: Git integration for automatic team repo commits
 
 ## 🚀 Usage
 
@@ -85,6 +87,50 @@ Machine-readable format containing:
 
 ### Text (`YYYY-MM-DD-report.txt`)
 Simple text format for quick reading
+
+## 🔗 Git Integration (Team Feature)
+
+Enable automatic commits to your team's daily-tracking repository:
+
+### Setup
+During `npm run setup`, choose "Yes" for Git integration and provide:
+- **Repository Path**: `/path/to/your/daily-tracking` repo
+- **Your Folder Name**: `shaurya` (your name/username)
+- **Auto-commit**: Automatically commit reports
+- **Auto-push**: Push to remote repository
+
+### Workflow
+```bash
+npm start
+```
+
+This will:
+1. Generate your daily report
+2. Save locally to your reports folder
+3. **Copy to team repo**: `daily-tracking/shaurya/2024-01-15-report.md`
+4. **Auto-commit**: With message "Add daily progress report for 2024-01-15"
+5. **Auto-push**: Push to remote so team can see
+
+### Team Structure
+```
+daily-tracking/
+├── shaurya/
+│   ├── 2024-01-15-report.md
+│   ├── 2024-01-16-report.md
+│   └── ...
+├── john/
+│   ├── 2024-01-15-report.md
+│   └── ...
+└── sarah/
+    ├── 2024-01-15-report.md
+    └── ...
+```
+
+### Benefits
+- **Zero manual work**: Just run `npm start`
+- **Team visibility**: Everyone's progress in one repo
+- **Git history**: Track team productivity over time
+- **Automatic**: No need to remember to commit/push
 
 ## 🎯 Perfect For
 
