@@ -1,0 +1,21 @@
+{
+  "name": "easy-tracking-process",
+  "version": "1.0.0",
+  "description": "Automated daily progress tracking from GitHub activity",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "setup": "node src/setup.js"
+  },
+  "keywords": ["github", "tracking", "automation", "progress"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^20.0.2",
+    "chalk": "^5.3.0",
+    "inquirer": "^9.2.12",
+    "node-cron": "^3.0.3"
+  }
+}
