@@ -24,12 +24,12 @@ export class GitIntegration {
                 console.log(chalk.gray(`📁 Created user folder: ${userFolder}`));
             }
 
-            // Create month folder (e.g., "july-2025")
+            // Create month folder (e.g., "July-2025")
             const reportDate = new Date(date);
             const monthYear = reportDate.toLocaleDateString('en-US', { 
                 month: 'long', 
                 year: 'numeric' 
-            }).toLowerCase().replace(' ', '-');
+            }).replace(' ', '-');
             
             const monthFolderPath = path.join(userFolderPath, monthYear);
             if (!fs.existsSync(monthFolderPath)) {
